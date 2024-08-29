@@ -1,0 +1,59 @@
+WITH RecentOrders AS (
+    SELECT 
+        o.customer_id,
+        oi.product_id,
+        SUM(oi.quantity * oi.price_per_unit) AS total_spent,
+        p.category
+    FROM 
+        Orders o
+        JOIN Order_Items oi ON o.order_id = oi.order_id
+        JOIN Products p ON oi.product_id = p.product_id
+    WHERE 
+        o.order_date >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+    GROUP BY 
+        o.customer_id, oi.product_id, p.category
+),
+CustomerSpending AS (
+    SELECT 
+        ro.customer_id,
+        c.customer_name,
+        c.email,
+        SUM(ro.total_spent) AS total_spent
+    FROM 
+        RecentOrders ro
+        JOIN Customers c ON ro.customer_id = c.customer_id
+    GROUP BY 
+        ro.customer_id, c.customer_name, c.email
+),
+CustomerCategorySpending AS (
+    SELECT 
+        ro.customer_id,
+        ro.category,
+        SUM(ro.total_spent) AS category_spent
+    FROM 
+        RecentOrders ro
+    GROUP BY 
+        ro.customer_id, ro.category
+),
+MostPurchasedCategory AS (
+    SELECT 
+        ccs.customer_id,
+        ccs.category AS most_purchased_category,
+        RANK() OVER (PARTITION BY ccs.customer_id ORDER BY ccs.category_spent DESC) AS rank
+    FROM 
+        CustomerCategorySpending ccs
+)
+SELECT 
+    cs.customer_id,
+    cs.customer_name,
+    cs.email,
+    cs.total_spent,
+    mpc.most_purchased_category
+FROM 
+    CustomerSpending cs
+    JOIN MostPurchasedCategory mpc ON cs.customer_id = mpc.customer_id
+WHERE 
+    mpc.rank = 1
+ORDER BY 
+    cs.total_spent DESC
+LIMIT 5;

@@ -1,0 +1,6 @@
+product_id,product_name,category,price,quantity_sold,rating,review_count
+1,Laptop,Electronics,1000,150,4.5,200
+2,Smartphone,Electronics,500,300,4.7,400
+3,Headphones,Accessories,100,500,4.3,150
+4,Bookshelf,Furniture,80,75,4.1,40
+5,Pencil,Stationery,2,3000,4.3,300
